@@ -85,97 +85,113 @@
       <canvas id="canvas"></canvas>
     </div>
 
-    <script>
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
+   <script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const img = new Image();
 
-      document.getElementById("imageInput").addEventListener("change", (e) => {
-        const reader = new FileReader();
-        reader.onload = () => (img.src = reader.result);
-        reader.readAsDataURL(e.target.files[0]);
-      });
+  document.getElementById("imageInput").addEventListener("change", e => {
+    const reader = new FileReader();
+    reader.onload = () => img.src = reader.result;
+    reader.readAsDataURL(e.target.files[0]);
+  });
 
-      // 🔐 Generate mixed secure code like 3xys4e
-      function generateUniqueCode(price) {
-        const letters = "abcdefghijklmnopqrstuvwxyz";
-        const digits = price.toString().split("");
+  // 🔐 Generate secure code (digits stay in correct order)
+  function generateUniqueCode(price) {
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    const digits = price.toString();
 
-        // generate 4 random letters
-        let randomLetters = [];
-        for (let i = 0; i < 4; i++) {
-          randomLetters.push(
-            letters[Math.floor(Math.random() * letters.length)],
-          );
-        }
+    // Generate 4 random letters
+    let randomLetters = [];
+    for (let i = 0; i < 4; i++) {
+      randomLetters.push(
+        letters[Math.floor(Math.random() * letters.length)]
+      );
+    }
 
-        // combine digits + letters
-        let mixedArray = [...digits, ...randomLetters];
+    let result = "";
+    let letterIndex = 0;
 
-        // shuffle (Fisher-Yates)
-        for (let i = mixedArray.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [mixedArray[i], mixedArray[j]] = [mixedArray[j], mixedArray[i]];
-        }
+    // Random letters before first digit
+    const beforeCount = Math.floor(Math.random() * 3);
+    for (let i = 0; i < beforeCount; i++) {
+      result += randomLetters[letterIndex++];
+    }
 
-        return mixedArray.join("");
+    // Insert digits in order with random letters between
+    for (let i = 0; i < digits.length; i++) {
+      result += digits[i];
+
+      const betweenCount = Math.floor(Math.random() * 2);
+      for (let j = 0; j < betweenCount && letterIndex < randomLetters.length; j++) {
+        result += randomLetters[letterIndex++];
       }
+    }
 
-      function generate() {
-        const rmb = document.getElementById("rmbPrice").value;
+    // Remaining letters at end
+    while (letterIndex < randomLetters.length) {
+      result += randomLetters[letterIndex++];
+    }
 
-        if (!img.src || !rmb) {
-          alert("Upload image and enter RMB price");
-          return;
-        }
+    return result;
+  }
 
-        img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
+  function generate() {
+    const rmb = document.getElementById("rmbPrice").value;
 
-          const code = generateUniqueCode(rmb);
+    if (!img.src || !rmb) {
+      alert("Upload image and enter RMB price");
+      return;
+    }
 
-          // 🔥 Responsive font size based on image width
-          const fontSize = Math.max(20, canvas.width * 0.035);
-          ctx.font = `bold ${fontSize}px Arial`;
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
 
-          // Measure text width
-          const textWidth = ctx.measureText(code).width;
+      const code = generateUniqueCode(rmb);
 
-          const paddingX = 18;
-          const paddingY = 10;
+      const fontSize = Math.max(20, canvas.width * 0.035);
+      ctx.font = `bold ${fontSize}px Arial`;
 
-          const boxWidth = textWidth + paddingX * 2;
-          const boxHeight = fontSize + paddingY * 2;
+      const textWidth = ctx.measureText(code).width;
 
-          const margin = 20;
-          const x = canvas.width - boxWidth - margin;
-          const y = canvas.height - boxHeight - margin;
+      const paddingX = 18;
+      const paddingY = 10;
 
-          // Modern dark rounded background
-          ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-          ctx.beginPath();
-          ctx.roundRect(x, y, boxWidth, boxHeight, 10);
-          ctx.fill();
+      const boxWidth = textWidth + paddingX * 2;
+      const boxHeight = fontSize + paddingY * 2;
 
-          // White code text
-          ctx.fillStyle = "#ffffff";
-          ctx.textAlign = "left";
-          ctx.textBaseline = "middle";
-          ctx.fillText(code, x + paddingX, y + boxHeight / 2);
-        };
+      const margin = 20;
+      const x = canvas.width - boxWidth - margin;
+      const y = canvas.height - boxHeight - margin;
 
-        if (img.complete) img.onload();
-      }
+      ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, boxWidth, boxHeight, 10);
+      ctx.fill();
 
-      function download() {
-        const a = document.createElement("a");
-        a.href = canvas.toDataURL("image/png");
-        a.download = "secured-product.png";
-        a.click();
-      }
-    </script>
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(
+        code,
+        x + paddingX,
+        y + boxHeight / 2
+      );
+    };
+
+    if (img.complete) img.onload();
+  }
+
+  function download() {
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = "secured-product.png";
+    a.click();
+  }
+</script>
+
   </body>
 </html>
